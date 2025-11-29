@@ -1,12 +1,9 @@
 menu:
-- {name: 'publications', url: '/publications'}
 - {name: 'courses', url: '/courses'}
 
 
 study:
-- {name: 'Vector Calculus', url: 'vector-calculus'}
-- {name: 'Quantum Mechanics', url: 'quantum-mechanics'}
-- {name: 'Stellar Structures', url: 'stellar-structures'}
+- {name: 'title', url: 'link}
 
 social:
 - {icon: 'github', link: 'https://github.com/'}
