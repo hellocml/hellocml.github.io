@@ -1,4 +1,9 @@
-# agentic-ai-public 완전 가이드
+---
+title: "agentic-ai-public 완전 가이드 - Windows에서 AI Research Agent 실행하기"
+date: 2026-11-23 15:00:00 +0900
+categories: [개발, AI]
+tags: [agentic-ai, docker, fastapi, openai, python]
+---
 
 > DeepLearning.AI의 "Agentic Workflow" 강의용 AI 연구 리포트 자동 생성 프로젝트를 Windows 환경에서 실행하는 방법을 정리한 문서입니다.
 
@@ -93,7 +98,7 @@ agentic-ai-public/
 
 "팀장" 역할. 연구 주제를 받아서 실행 계획(최대 7단계)을 만듦.
 
-- OpenAI 모델(기본: `o4-mini`)에게 프롬프트를 보내서 계획 생성
+- OpenAI 모델(기본: `gpt-4o-mini`)에게 프롬프트를 보내서 계획 생성
 - 필수 규칙: 1단계=Tavily 웹검색, 2단계=arXiv 논문검색, 마지막=리포트 작성
 - `executor_agent_step()`: 각 단계의 키워드에 따라 적절한 에이전트를 호출
   - "research" → Research Agent
@@ -102,7 +107,7 @@ agentic-ai-public/
 
 ### src/agents.py - 실행 에이전트 3인방
 
-aisuite 라이브러리를 사용하여 OpenAI 모델(gpt-4.1-mini)과 통신.
+aisuite 라이브러리를 사용하여 OpenAI 모델(gpt-4o-mini)과 통신.
 
 | 에이전트 | 역할 | 특징 |
 |----------|------|------|
@@ -348,7 +353,25 @@ return templates.TemplateResponse(request=request, name="index.html")
 docker rm -f fpsvc
 ```
 
-### 오류 5: `open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified`
+### 오류 5: `The model 'o4-mini' has been deprecated`
+
+**원인**: 원본 코드에서 사용하는 OpenAI 모델(`o4-mini`, `gpt-4.1-mini`)이 더 이상 지원되지 않음.
+
+**해결**: 두 파일의 모델명을 `gpt-4o-mini`로 변경:
+
+`src/planning_agent.py` 27번 줄:
+```python
+# 변경 전
+def planner_agent(topic: str, model: str = "openai:o4-mini") -> List[str]:
+# 변경 후
+def planner_agent(topic: str, model: str = "openai:gpt-4o-mini") -> List[str]:
+```
+
+`src/agents.py`에서 `openai:gpt-4.1-mini`를 모두 `openai:gpt-4o-mini`로 변경 (3군데).
+
+> 이후 반드시 `docker build`를 다시 실행해야 합니다.
+
+### 오류 6: `open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified`
 
 **원인**: Docker Desktop이 실행되고 있지 않음.
 
@@ -374,7 +397,7 @@ docker rm -f fpsvc
 ## 참고 사항
 
 - **API 키 보안**: `.env` 파일은 로컬에만 존재하며, Docker 컨테이너 → OpenAI/Tavily 서버로만 직접 전송됩니다 (HTTPS 암호화). 외부에 공개되지 않습니다. 단, `.env` 파일을 GitHub에 올리지 않도록 주의하세요.
-- **비용**: OpenAI API 호출마다 비용 발생 (gpt-4.1-mini 사용, 리포트 1건당 약 $0.05~0.20 추정).
+- **비용**: OpenAI API 호출마다 비용 발생 (gpt-4o-mini 사용, 리포트 1건당 약 $0.05~0.20 추정).
 - **영어 권장**: 프롬프트와 도구들이 영어 기준으로 설계되어 있어 영어 주제가 가장 잘 작동합니다.
 - **네트워크 필요**: arXiv, Tavily, Wikipedia, OpenAI 모두 인터넷 연결이 필요합니다.
 - **두 번째 실행부터는** Docker 이미지가 이미 있으므로 Step 4(`docker run`)만 실행하면 됩니다.
